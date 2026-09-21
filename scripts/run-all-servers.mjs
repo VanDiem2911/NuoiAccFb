@@ -27,8 +27,8 @@ function startProcess(name, cmd, args, cwd) {
   return child;
 }
 
-// 1. Dashboard (Next.js - Port 3100)
-startProcess('Dashboard 3100', process.execPath, [nextBin, 'start', '-p', '3100', '-H', '127.0.0.1'], dashDir);
+// 1. Dashboard (Next.js - Port 3100 Dev Mode)
+startProcess('Dashboard 3100', process.execPath, [nextBin, 'dev', '-p', '3100', '-H', '127.0.0.1'], dashDir);
 
 // 2. Bridge Server (Port 3101)
 startProcess('Bridge 3101', process.execPath, ['server.mjs'], rootDir);

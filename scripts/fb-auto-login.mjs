@@ -271,3 +271,34 @@ async function detectProfileUrl(page) {
   } catch {}
   return 'https://www.facebook.com/';
 }
+
+// CLI Execution Handler
+if (process.argv[1] && fileURLToPath(import.meta.url) === path.resolve(process.argv[1])) {
+  (async () => {
+    try {
+      let account = null;
+      const payloadIdx = process.argv.indexOf('--payload');
+      if (payloadIdx !== -1 && process.argv[payloadIdx + 1]) {
+        const raw = Buffer.from(process.argv[payloadIdx + 1], 'base64').toString('utf-8');
+        account = JSON.parse(raw);
+      } else {
+        const jsonIdx = process.argv.indexOf('--account');
+        if (jsonIdx !== -1 && process.argv[jsonIdx + 1]) {
+          account = JSON.parse(process.argv[jsonIdx + 1]);
+        }
+      }
+
+      if (!account) {
+        console.error('Missing --payload or --account argument');
+        process.exit(1);
+      }
+
+      const res = await autoLoginFacebook(account, (msg) => console.log(msg));
+      console.log('RESULT_JSON:' + JSON.stringify(res));
+      process.exit(0);
+    } catch (err) {
+      console.error('ERROR_MSG:' + err.message);
+      process.exit(1);
+    }
+  })();
+}

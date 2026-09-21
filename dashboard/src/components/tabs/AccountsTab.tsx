@@ -310,14 +310,26 @@ export default function AccountsTab({
                           Port: {acc.port}
                         </span>
                         <div className="flex items-center gap-1.5">
-                          {acc.isReady ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                              Chrome Online
+                          {acc.loginStatus === 'logged_in' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-xs">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse"></span>
+                              🟢 Đã Đăng Nhập
+                            </span>
+                          ) : acc.loginStatus === 'checkpoint' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 animate-pulse">
+                              🔴 Bị Checkpoint
+                            </span>
+                          ) : acc.loginStatus === 'not_logged_in' ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-800 border border-amber-300">
+                              🟡 Chưa Đăng Nhập
+                            </span>
+                          ) : acc.isReady ? (
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-sky-50 text-sky-700 border border-sky-200">
+                              🔵 Chrome Đang Mở
                             </span>
                           ) : (
-                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                              Offline
+                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                              ⚪ Chưa Mở Chrome
                             </span>
                           )}
                         </div>
@@ -333,8 +345,32 @@ export default function AccountsTab({
                         </span>
                       </div>
 
+                      {/* Thông báo trạng thái đăng nhập thực tế */}
+                      <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100 text-xs">
+                        {acc.loginStatus === 'logged_in' ? (
+                          <span className="text-emerald-700 font-bold flex items-center gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                            Đã đăng nhập - Sẵn sàng nuôi & kết bạn
+                          </span>
+                        ) : acc.loginStatus === 'checkpoint' ? (
+                          <span className="text-rose-700 font-bold flex items-center gap-1.5">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            Dính checkpoint xác thực
+                          </span>
+                        ) : acc.loginStatus === 'not_logged_in' ? (
+                          <span className="text-amber-700 font-bold flex items-center gap-1.5">
+                            <KeyRound className="w-3.5 h-3.5" />
+                            Chưa đăng nhập: Hãy bấm nút [Auto Login] bên dưới
+                          </span>
+                        ) : (
+                          <span className="text-slate-500 font-medium">
+                            Bấm [Auto Login] để đăng nhập tự động bằng 2FA
+                          </span>
+                        )}
+                      </div>
+
                       {/* 2FA & Security Badge */}
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <div className="flex flex-wrap items-center gap-2 pt-0.5">
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
                           <KeyRound className="w-3 h-3 text-blue-500" />
                           2FA Sẵn Sàng

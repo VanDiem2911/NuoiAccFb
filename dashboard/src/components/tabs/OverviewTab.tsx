@@ -2,215 +2,259 @@
 
 import React from 'react';
 import {
-  Radio,
-  Share2,
-  Bot,
-  Sparkles,
+  ShieldCheck,
+  ShieldAlert,
+  Users,
   Globe,
   ArrowUpRight,
-  Layers,
-  Users,
+  Sprout,
+  UserCheck,
+  Upload,
+  Radio,
+  ExternalLink,
+  CheckCircle2,
+  AlertTriangle,
 } from 'lucide-react';
-import { ServerStatus, AccountItem, GroupAccount } from '@/types/dashboard';
+import { ServerStatus, AccountItem } from '@/types/dashboard';
 
 interface OverviewTabProps {
   status: ServerStatus | null;
-  groupsData: {
-    accounts?: GroupAccount[];
-    totalGroups?: number;
-  };
-  chatgptAccounts: AccountItem[];
-  facebookGroupCount: number;
-  totalAccountsCount: number;
+  accounts: AccountItem[];
   handleOpenChrome: (profileDir: string, port: number, url?: string) => Promise<void>;
-  setActiveTab: (tab: 'overview' | 'analytics' | 'accounts' | 'credentials' | 'schedule' | 'bot') => void;
+  setActiveTab: (tab: 'accounts' | 'nurture' | 'friend' | 'overview') => void;
+  openImportModal: () => void;
 }
 
 export default function OverviewTab({
   status,
-  groupsData,
-  chatgptAccounts,
-  facebookGroupCount,
-  totalAccountsCount,
+  accounts,
   handleOpenChrome,
   setActiveTab,
+  openImportModal,
 }: OverviewTabProps) {
+  const readyCount = accounts.filter((a) => a.isReady || a.enabled !== false).length;
+  const checkpointCount = accounts.filter((a) => a.status === 'checkpoint' || a.checkpointReason).length;
+
   return (
     <div className="space-y-8">
-      {/* Status Grid Cards */}
+      {/* Top System Status Bar */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Server 1 */}
-        <div className="liquid-glass liquid-glass-interactive rounded-3xl p-6 relative overflow-hidden">
+        {/* Desktop Bridge */}
+        <div className="liquid-glass rounded-3xl p-6 relative overflow-hidden">
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-2">
               <span className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 shadow-xs">
                 <Radio className="w-4 h-4" />
               </span>
-              <span className="font-bold text-sm text-slate-900">Desktop Bridge & GPT</span>
+              <span className="font-bold text-sm text-slate-900">Desktop Bridge & CDP</span>
             </div>
             <span
               className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
-                status?.servers?.fanpageGpt?.active
+                status?.servers?.bridge?.active
                   ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                  : 'bg-rose-50 text-rose-700 border border-rose-200'
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
               }`}
             >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  status?.servers?.fanpageGpt?.active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
-                }`}
-              ></span>
-              Port 3101
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 font-medium mt-1">Điều khiển Chrome ChatGPT tạo ảnh & Desktop Bridge</p>
-        </div>
-
-        {/* Kênh Trang Cá Nhân Nuôi Nick */}
-        <div className="liquid-glass liquid-glass-interactive rounded-3xl p-6 relative overflow-hidden">
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-xs">
-                <Globe className="w-4 h-4" />
-              </span>
-              <span className="font-bold text-sm text-slate-900">Facebook Cá Nhân</span>
-            </div>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              Nuôi Nick An Toàn
+              Port 3101 (Ready)
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Mỗi nick chạy profile Chrome và port riêng, tự động chống checkpoint
+            Điều phối các trình duyệt Chrome độc lập qua Chrome DevTools Protocol
           </p>
         </div>
 
-        {/* ChatGPT Multi-Account Status */}
-        <div className="liquid-glass liquid-glass-interactive rounded-3xl p-6 relative overflow-hidden">
+        {/* Facebook Accounts Status */}
+        <div className="liquid-glass rounded-3xl p-6 relative overflow-hidden">
           <div className="flex justify-between items-start mb-3">
             <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-violet-50 text-violet-600 border border-violet-100 shadow-xs">
-                <Bot className="w-4 h-4" />
+              <span className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 shadow-xs">
+                <Users className="w-4 h-4" />
               </span>
-              <span className="font-bold text-sm text-slate-900">ChatGPT Xen Kẽ</span>
+              <span className="font-bold text-sm text-slate-900">Tài Khoản Nuôi</span>
             </div>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-violet-50 text-violet-700 border border-violet-200">
-              <Sparkles className="w-3.5 h-3.5 text-violet-600" /> {chatgptAccounts?.length || 0} Tài khoản
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              {accounts.length} Tài khoản
             </span>
           </div>
-          <p className="text-xs text-slate-500 font-medium mt-1">Tự động luân phiên & fallback khi hết quota</p>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            Mỗi tài khoản chạy 1 Port và Profile Chrome độc lập (Chống checkpoint chéo)
+          </p>
+        </div>
+
+        {/* Checkpoint Status */}
+        <div className="liquid-glass rounded-3xl p-6 relative overflow-hidden">
+          <div className="flex justify-between items-start mb-3">
+            <div className="flex items-center gap-2">
+              <span
+                className={`p-2 rounded-xl border shadow-xs ${
+                  checkpointCount > 0
+                    ? 'bg-rose-50 text-rose-600 border-rose-100'
+                    : 'bg-emerald-50 text-emerald-600 border-emerald-100'
+                }`}
+              >
+                {checkpointCount > 0 ? (
+                  <ShieldAlert className="w-4 h-4" />
+                ) : (
+                  <ShieldCheck className="w-4 h-4" />
+                )}
+              </span>
+              <span className="font-bold text-sm text-slate-900">Tình Trạng Checkpoint</span>
+            </div>
+            <span
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${
+                checkpointCount > 0
+                  ? 'bg-rose-100 text-rose-800 border border-rose-200 animate-pulse'
+                  : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+              }`}
+            >
+              {checkpointCount > 0 ? `🔴 ${checkpointCount} Cần xác minh` : '🟢 Tất cả an toàn'}
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            {checkpointCount > 0
+              ? 'Có tài khoản cần vào Chrome gỡ xác minh danh tính'
+              : 'Không có tài khoản nào dính checkpoint'}
+          </p>
         </div>
       </div>
 
-      {/* Quick Actions & Big Stats Section */}
+      {/* Quick Action Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <button
+          onClick={() => setActiveTab('nurture')}
+          className="p-6 rounded-3xl bg-gradient-to-br from-teal-500 to-emerald-600 text-white shadow-lg shadow-teal-500/15 hover:shadow-xl transition-all transform hover:-translate-y-0.5 text-left group cursor-pointer"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="p-3 rounded-2xl bg-white/20 backdrop-blur-md">
+              <Sprout className="w-6 h-6 text-emerald-100" />
+            </span>
+            <ArrowUpRight className="w-5 h-5 text-emerald-200 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+          </div>
+          <h4 className="text-lg font-black tracking-tight">🌱 Chạy Nuôi Nick Tự Động</h4>
+          <p className="text-xs text-teal-100 mt-1 font-medium leading-relaxed">
+            Lướt Newsfeed, xem video Reels, tương tác thả tim dạo để làm ấm tài khoản.
+          </p>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('friend')}
+          className="p-6 rounded-3xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/15 hover:shadow-xl transition-all transform hover:-translate-y-0.5 text-left group cursor-pointer"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="p-3 rounded-2xl bg-white/20 backdrop-blur-md">
+              <UserCheck className="w-6 h-6 text-blue-100" />
+            </span>
+            <ArrowUpRight className="w-5 h-5 text-blue-200 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+          </div>
+          <h4 className="text-lg font-black tracking-tight">🤝 Chạy Kết Bạn Chéo</h4>
+          <p className="text-xs text-blue-100 mt-1 font-medium leading-relaxed">
+            Tự động cho các tài khoản nuôi kết bạn với nhau để xây dựng tệp bạn bè an toàn.
+          </p>
+        </button>
+
+        <button
+          onClick={openImportModal}
+          className="p-6 rounded-3xl bg-gradient-to-br from-purple-600 to-violet-700 text-white shadow-lg shadow-purple-500/15 hover:shadow-xl transition-all transform hover:-translate-y-0.5 text-left group cursor-pointer"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <span className="p-3 rounded-2xl bg-white/20 backdrop-blur-md">
+              <Upload className="w-6 h-6 text-purple-100" />
+            </span>
+            <ArrowUpRight className="w-5 h-5 text-purple-200 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+          </div>
+          <h4 className="text-lg font-black tracking-tight">📥 Nhập Danh Sách Mới</h4>
+          <p className="text-xs text-purple-100 mt-1 font-medium leading-relaxed">
+            Nhập hàng loạt nick theo cú pháp UID|Pass|2FA, tự động cấu hình Chrome.
+          </p>
+        </button>
+      </div>
+
+      {/* Main Grid: Direct Chrome Launchers & Safe Farming Rules */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 1-Click Launchers */}
-        <div className="liquid-glass rounded-3xl p-7 lg:col-span-2 space-y-5">
-          <div className="flex items-center justify-between">
+        {/* 1-Click Chrome Launchers */}
+        <div className="bg-white rounded-3xl p-7 border border-slate-200 shadow-sm space-y-5 lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div className="flex items-center gap-2.5">
-              <span className="p-2.5 rounded-2xl bg-blue-50 text-blue-600 border border-blue-100">
-                <Globe className="w-5 h-5" />
+              <span className="p-2 rounded-xl bg-blue-50 text-blue-600 border border-blue-100">
+                <Globe className="w-4 h-4" />
               </span>
               <div>
                 <h3 className="font-extrabold text-base text-slate-900">
-                  Mở Trình duyệt Đăng nhập Nhanh (1-Click)
+                  Mở Nhanh Trình Duyệt Chrome Từng Tài Khoản
                 </h3>
-                <p className="text-xs text-slate-500">Mở Chrome profile tương ứng để đăng nhập nick trực tiếp an toàn</p>
+                <p className="text-xs text-slate-500 font-medium">
+                  Mở trực tiếp profile Chrome độc lập để kiểm tra trang cá nhân hoặc gỡ xác minh
+                </p>
               </div>
             </div>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-600 rounded-full border border-slate-200">
-              Direct Launcher
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
-            {chatgptAccounts?.map((acc, idx) => (
-              <button
-                key={acc.id}
-                onClick={() => handleOpenChrome(acc.profileDir, acc.port, 'https://chatgpt.com/')}
-                className="flex items-center justify-between p-4 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/90 hover:border-blue-300 text-xs font-bold text-slate-800 shadow-xs hover:shadow-md transition-all group"
-              >
-                <span className="flex items-center gap-2.5 text-slate-800">
-                  <span
-                    className={`w-8 h-8 rounded-xl flex items-center justify-center border font-bold ${
-                      idx === 0
-                        ? 'bg-emerald-50 text-emerald-600 border-emerald-100'
-                        : idx === 1
-                        ? 'bg-violet-50 text-violet-600 border-violet-100'
-                        : 'bg-sky-50 text-sky-600 border-sky-100'
-                    }`}
-                  >
-                    🤖
-                  </span>
-                  <span>
-                    {acc.name} <span className="text-[11px] text-slate-400 font-normal">(Port {acc.port})</span>
-                  </span>
-                </span>
-                <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-              </button>
-            ))}
-
-            <button
-              onClick={() => handleOpenChrome('n8n-fb-profile-9323', 9323, 'https://www.facebook.com/')}
-              className="flex items-center justify-between p-4 rounded-2xl bg-white/70 hover:bg-white border border-slate-200/90 hover:border-blue-300 text-xs font-bold text-slate-800 shadow-xs hover:shadow-md transition-all group"
-            >
-              <span className="flex items-center gap-2.5 text-slate-800">
-                <span className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100 font-bold">
-                  📄
-                </span>
-                <span>Facebook Cá Nhân (Port 9323)</span>
-              </span>
-              <ArrowUpRight className="w-4 h-4 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
-            </button>
-
             <button
               onClick={() => setActiveTab('accounts')}
-              className="flex items-center justify-between p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100/70 hover:to-indigo-100/70 border border-blue-200/80 text-xs font-bold text-blue-800 shadow-xs hover:shadow-md transition-all group"
+              className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1"
             >
-              <span className="flex items-center gap-2.5">
-                <span className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold">
-                  👥
-                </span>
-                <span>Quản lý Tất cả Tài khoản...</span>
-              </span>
-              <span className="text-blue-600 group-hover:translate-x-1 transition-transform">➔</span>
+              Xem tất cả ({accounts.length})
             </button>
           </div>
+
+          {accounts.length === 0 ? (
+            <div className="text-center py-10 text-slate-400 text-xs">
+              Chưa có tài khoản Facebook nào. Hãy bấm &quot;Nhập danh sách mới&quot; để bắt đầu.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+              {accounts.slice(0, 8).map((acc) => (
+                <button
+                  key={acc.id}
+                  onClick={() => handleOpenChrome(acc.profileDir, acc.port, acc.url || 'https://www.facebook.com/')}
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50 hover:bg-white border border-slate-200/90 hover:border-blue-300 text-xs font-bold text-slate-800 shadow-xs hover:shadow-md transition-all group cursor-pointer text-left"
+                >
+                  <div className="min-w-0 pr-2">
+                    <span className="font-bold text-slate-900 truncate block">
+                      {acc.name}
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      Port: {acc.port} | {acc.profileDir}
+                    </span>
+                  </div>
+                  <ExternalLink className="w-4 h-4 text-slate-400 group-hover:text-blue-600 shrink-0 transition-colors" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Statistics & Quick Launch CTA */}
-        <div className="liquid-glass rounded-3xl p-7 flex flex-col justify-between space-y-5">
-          <div className="flex items-center gap-2.5">
-            <span className="p-2.5 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100">
-              <Layers className="w-5 h-5" />
-            </span>
-            <div>
-              <h3 className="font-extrabold text-base text-slate-900">Tổng quan Dữ liệu</h3>
-              <p className="text-xs text-slate-500">Tài nguyên hiện hữu trong hệ thống</p>
-            </div>
+        {/* Lộ trình Nuôi Nick An Toàn 7 Ngày */}
+        <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+          <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
+            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+            <h3 className="font-extrabold text-sm text-slate-900">
+              Lộ Trình Nuôi Nick Mới 7 Ngày
+            </h3>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="liquid-recess p-4 rounded-2xl text-center">
-              <div className="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                {facebookGroupCount}
-              </div>
-              <div className="text-xs font-bold text-slate-500 mt-1">Link Nhóm FB</div>
+          <div className="space-y-3 text-xs">
+            <div className="p-3 rounded-xl bg-emerald-50/60 border border-emerald-100">
+              <span className="font-extrabold text-emerald-800 block">Ngày 1 - 2: Làm Ấm Profile</span>
+              <p className="text-[11px] text-emerald-700 mt-0.5 leading-relaxed">
+                Đăng nhập bằng 2FA, lướt Newsfeed 2-3 phút, tuyệt đối KHÔNG kết bạn, KHÔNG tham gia nhóm.
+              </p>
             </div>
-            <div className="liquid-recess p-4 rounded-2xl text-center">
-              <div className="text-3xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
-                {totalAccountsCount}
-              </div>
-              <div className="text-xs font-bold text-slate-500 mt-1">Tài khoản & Kênh</div>
+
+            <div className="p-3 rounded-xl bg-blue-50/60 border border-blue-100">
+              <span className="font-extrabold text-blue-800 block">Ngày 3 - 4: Tương Tác Nhẹ</span>
+              <p className="text-[11px] text-blue-700 mt-0.5 leading-relaxed">
+                Xem video Reels 2-3 phút, thả like 1-2 bài viết của bạn bè hoặc fanpage tin tức uy tín.
+              </p>
+            </div>
+
+            <div className="p-3 rounded-xl bg-purple-50/60 border border-purple-100">
+              <span className="font-extrabold text-purple-800 block">Ngày 5 - 7: Kết Bạn Chéo</span>
+              <p className="text-[11px] text-purple-700 mt-0.5 leading-relaxed">
+                Bật kịch bản Kết Bạn Chéo giữa các nick nuôi (1-2 bạn bè/ngày) để tăng độ trust vững chắc.
+              </p>
             </div>
           </div>
-
-          <button
-            onClick={() => setActiveTab('accounts')}
-            className="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-xs shadow-lg shadow-blue-600/30 hover:shadow-xl hover:shadow-blue-600/40 transition-all flex items-center justify-center gap-2 cursor-pointer"
-          >
-            <Users className="w-4 h-4" /> Quản lý Nick Facebook Cá Nhân
-          </button>
         </div>
       </div>
     </div>

@@ -42,13 +42,15 @@ export interface AnalyticsStats {
 
 export interface ServerStatus {
   ok: boolean;
-  servers: {
-    fanpageGpt: { port: number; name: string; active: boolean };
-    fbGroups: { port: number; name: string; active: boolean };
+  servers?: {
+    fanpageGpt?: { port: number; name: string; active: boolean };
+    fbGroups?: { port: number; name: string; active: boolean };
+    bridge?: { port: number; name: string; active: boolean };
+    [key: string]: any;
   };
-  chromeGpt: {
-    acc1: { port: number; active: boolean };
-    acc2: { port: number; active: boolean };
+  chromeGpt?: {
+    acc1?: { port: number; active: boolean };
+    acc2?: { port: number; active: boolean };
   };
 }
 
@@ -78,6 +80,9 @@ export interface AccountItem {
   canPostGroup?: boolean;
   groupUrls?: string[];
   roleGroup?: string;
+  username?: string;
+  has2Fa?: boolean;
+  lastNurturedAt?: string | null;
 }
 
 export interface AccountCategory {

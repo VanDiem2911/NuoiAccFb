@@ -153,6 +153,9 @@ export async function GET() {
       loginStatus?: string;
       isReady?: boolean;
       currentUrl?: string;
+      username?: string;
+      has2Fa?: boolean;
+      lastNurturedAt?: string;
     }
 
     const unifiedMap = new Map<string, UnifiedFbItem>();
@@ -268,6 +271,40 @@ export async function GET() {
         if (pers.profileUrl && (!existing.url || existing.url === 'https://www.facebook.com/')) {
           existing.url = String(pers.profileUrl);
         }
+        if (pers.username) existing.username = String(pers.username);
+        if (pers.twoFactorSecret) existing.has2Fa = true;
+        if (pers.lastNurturedAt) existing.lastNurturedAt = String(pers.lastNurturedAt);
+      } else {
+        const key = p > 0 ? `port_${p}` : `pers_${pers.id || idx + 1}`;
+        const pUrl = (pers.profileUrl || pers.url || 'https://www.facebook.com/') as string;
+        const profileDir = (pers.profileDir as string) || (p > 0 ? `n8n-fb-profile-${p}` : `n8n-fb-profile-9323`);
+        const profilePath = path.join(localAppData, profileDir);
+
+        unifiedMap.set(key, {
+          id: String(pers.id || `pers_${idx + 1}`),
+          rawId: String(pers.id || `pers_${idx + 1}`),
+          name: (pers.name as string) || `Tài khoản Cá Nhân ${idx + 1}`,
+          port: p,
+          profileDir,
+          url: pUrl,
+          canPostFanpage: false,
+          canPostGroup: false,
+          groupUrls: [],
+          groupCount: 0,
+          roleGroup: 'group_1',
+          enabled: pers.enabled !== false,
+          status: (pers.status as string) || 'active',
+          checkpointReason: '',
+          checkpointUrl: '',
+          checkpointAt: '',
+          originalCategory: 'personal',
+          desc: `Tài khoản nuôi cá nhân (Port ${p})`,
+          profileExists: fs.existsSync(profilePath),
+          isConfigured: true,
+          username: pers.username ? String(pers.username) : undefined,
+          has2Fa: Boolean(pers.twoFactorSecret),
+          lastNurturedAt: pers.lastNurturedAt ? String(pers.lastNurturedAt) : undefined,
+        });
       }
     });
 

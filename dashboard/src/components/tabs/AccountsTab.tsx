@@ -29,6 +29,8 @@ import {
   AlertTriangle,
   FileText,
   Power,
+  Upload,
+  Sprout,
 } from 'lucide-react';
 import { AccountCategory, AccountItem, GroupAccount, CentralPoolItem, RotationConfig } from '@/types/dashboard';
 import AccountModals, {
@@ -37,6 +39,8 @@ import AccountModals, {
   ChatGptModalFormData,
   EditingChatGptFormData,
 } from '@/components/modals/AccountModals';
+import ImportAccountsModal from '@/components/modals/ImportAccountsModal';
+import AutoNurtureModal from '@/components/modals/AutoNurtureModal';
 
 interface AccountsTabProps {
   handleMarkCheckpoint?: (accountId: string, category: string, reason?: string) => Promise<void>;
@@ -126,8 +130,10 @@ export default function AccountsTab({
   setIsEditChatGptOpen,
   showToast,
 }: AccountsTabProps) {
-  // Auto-Friend Farm State
+  // Auto-Friend Farm & Nurture State
   const [isAutoFriendModalOpen, setIsAutoFriendModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isAutoNurtureModalOpen, setIsAutoNurtureModalOpen] = useState(false);
   const [autoFriendRunning, setAutoFriendRunning] = useState(false);
   const [autoFriendLogs, setAutoFriendLogs] = useState<Array<{ time: string; text: string; type: 'info' | 'success' | 'warning' | 'error' }>>([]);
   const [autoFriendMessage, setAutoFriendMessage] = useState('');
@@ -247,11 +253,18 @@ export default function AccountsTab({
 
           <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
+              onClick={() => setIsImportModalOpen(true)}
+              className="flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-extrabold bg-gradient-to-r from-emerald-500 to-teal-500 text-white hover:from-emerald-400 hover:to-teal-400 rounded-2xl shadow-lg shadow-emerald-500/20 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              📥 Nhập danh sách (UID|Pass|2FA)
+            </button>
+            <button
               onClick={openAddFbModal}
               className="flex items-center gap-2 px-5 py-3 text-xs sm:text-sm font-extrabold bg-white text-blue-700 hover:bg-blue-50 rounded-2xl shadow-lg transition-all transform hover:-translate-y-0.5 cursor-pointer"
             >
               <UserPlus className="w-4 h-4 text-blue-600" />
-              Thêm tài khoản Facebook
+              Thêm tài khoản thủ công
             </button>
             <button
               onClick={() => setIsAddChatGptOpen(true)}
@@ -390,6 +403,15 @@ export default function AccountsTab({
                     <ArrowLeftRight className="w-3 h-3" />
                   </button>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsAutoNurtureModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-black bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-500 hover:to-cyan-500 text-white rounded-xl shadow-md shadow-teal-600/25 transition-all cursor-pointer"
+                  title="Tự động lướt Newsfeed, xem Reels, thả tim dạo nuôi nick tự nhiên"
+                >
+                  <Sprout className="w-3.5 h-3.5" /> 🌱 Tự động nuôi nick (Warm-up)
+                </button>
 
                 <button
                   type="button"
@@ -856,6 +878,21 @@ export default function AccountsTab({
           </div>
         </div>
       )}
+
+      {/* Modal Nhập Danh Sách Tài Khoản Hàng Loạt (UID|Pass|2FA) */}
+      <ImportAccountsModal
+        isOpen={isImportModalOpen}
+        onClose={() => setIsImportModalOpen(false)}
+        onSuccess={fetchAccounts}
+        showToast={showToast}
+      />
+
+      {/* Modal Nuôi Nick Tự Động (Auto-Nurture) */}
+      <AutoNurtureModal
+        isOpen={isAutoNurtureModalOpen}
+        onClose={() => setIsAutoNurtureModalOpen(false)}
+        showToast={showToast}
+      />
     </>
   );
 }

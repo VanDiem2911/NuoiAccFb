@@ -1,0 +1,98 @@
+# kill-and-restart.ps1
+# Dung va khoi dong lai 3 Server (Next.js 3100, ChatGPT & FB Personal 3101, Bot 3104)
+
+$servers = @(
+    @{ Port = 3100; File = 'next';           Name = 'Next.js Control Center Dashboard' },
+    @{ Port = 3101; File = 'server.mjs';     Name = 'Server 1 (ChatGPT & Facebook Ca Nhan)' },
+    @{ Port = 3104; File = 'bot-server.mjs'; Name = 'Server 2 (Telegram Bot & Remote Watchdog)' }
+)
+
+Write-Host "=================================================" -ForegroundColor Cyan
+Write-Host "   DANG DUNG (KILL) CAC PROCESS DANG CHAY...     " -ForegroundColor Yellow
+Write-Host "=================================================" -ForegroundColor Cyan
+
+foreach ($srv in $servers) {
+    $p = $srv.Port
+    $lines = netstat -ano | Select-String ":$p\s.*LISTENING"
+    foreach ($line in $lines) {
+        $parts = ($line.ToString().Trim() -split '\s+')
+        $procId = $parts[-1]
+        if ($procId -match '^\d+$') {
+            try {
+                Stop-Process -Id ([int]$procId) -Force -ErrorAction SilentlyContinue
+                Write-Host "-> Da dung tien trinh PID $procId tren Port $p ($($srv.Name))" -ForegroundColor Yellow
+            } catch {}
+        }
+    }
+}
+
+Start-Sleep -Seconds 2
+
+Write-Host "`n=================================================" -ForegroundColor Cyan
+Write-Host "   KHOI DONG LAI TOAN BO 3 SERVERS...            " -ForegroundColor Cyan
+Write-Host "=================================================" -ForegroundColor Cyan
+
+# Kiem tra va cai dat dependencies cho ca Bridge va Dashboard
+$bridgeDir = if (Test-Path (Join-Path $PSScriptRoot "dashboard")) { $PSScriptRoot } else { Split-Path $PSScriptRoot -Parent }
+$dashDir = Join-Path $bridgeDir "dashboard"
+
+$rootModules = Join-Path $bridgeDir "node_modules"
+if (-not (Test-Path $rootModules)) {
+    Write-Host "-> Cai dat dependencies cho Bridge Server (express, playwright-core)..." -ForegroundColor Yellow
+    Push-Location $bridgeDir
+    & npm install
+    Pop-Location
+}
+
+$dashModules = Join-Path $dashDir "node_modules"
+if (-not (Test-Path $dashModules)) {
+    Write-Host "-> Cai dat dependencies cho Dashboard..." -ForegroundColor Yellow
+    Push-Location $dashDir
+    & npm install
+    Pop-Location
+}
+
+Write-Host "-> Dang build Next.js Dashboard Bundle de cap nhat code moi nhat..." -ForegroundColor Yellow
+Push-Location $dashDir
+& npm run build
+Pop-Location
+
+$vbs = if (Test-Path (Join-Path $PSScriptRoot "run-hidden.vbs")) { Join-Path $PSScriptRoot "run-hidden.vbs" } else { Join-Path $bridgeDir "scripts\run-hidden.vbs" }
+Start-Process wscript -ArgumentList "`"$vbs`"" -WindowStyle Hidden
+Write-Host "-> Da khoi dong ca 3 Servers qua Windows Script Host (Hidden & Detached)..." -ForegroundColor Green
+
+Write-Host "-> Dang cho cac Server khoi dong va bind port..." -ForegroundColor Yellow
+
+$deadline = (Get-Date).AddSeconds(20)
+$allReady = $false
+
+while ((Get-Date) -lt $deadline) {
+    Start-Sleep -Seconds 2
+    $listeningCount = 0
+    foreach ($srv in $servers) {
+        $p = $srv.Port
+        $check = netstat -ano | Select-String ":$p\s.*LISTENING"
+        if ($check) { $listeningCount++ }
+    }
+    if ($listeningCount -eq $servers.Count) {
+        $allReady = $true
+        break
+    }
+}
+
+Write-Host "`n=================================================" -ForegroundColor Cyan
+Write-Host "   TRANG THAI CAC SERVERS HIEN TAI:             " -ForegroundColor Yellow
+Write-Host "=================================================" -ForegroundColor Cyan
+
+foreach ($srv in $servers) {
+    $p = $srv.Port
+    $check = netstat -ano | Select-String ":$p\s.*LISTENING"
+    if ($check) {
+        Write-Host " [OK] $($srv.Name) - Port $p DANG CHAY!" -ForegroundColor Green
+    } else {
+        Write-Host " [ERR] $($srv.Name) - Port $p CHUA CHAY (Kiem tra log)." -ForegroundColor Red
+    }
+}
+Write-Host "=================================================" -ForegroundColor Cyan
+Start-Process "http://127.0.0.1:3100"
+

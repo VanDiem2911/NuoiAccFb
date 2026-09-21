@@ -99,6 +99,14 @@ export async function POST(req: NextRequest) {
         args.push('--dry-run');
       }
 
+      if (body.targetUrl) {
+        args.push('--target', String(body.targetUrl));
+      }
+
+      if (body.senderPort) {
+        args.push('--port', String(body.senderPort));
+      }
+
       state.logs.push({
         time: new Date().toLocaleTimeString('vi-VN'),
         text: `🚀 Bắt đầu kịch bản Auto-Friend Farm (Delay: ${delaySec}s)...`,

@@ -385,8 +385,13 @@ export async function checkAndAddFriend(page, targetUrl, targetAccountName) {
   // =========================================================================
   console.log(`[Auto-Friend] 🔍 [2/4] Tìm nút "Thêm bạn bè" trên thanh công cụ...`);
 
+  let addFriendClicked = false;
+
   const directAddBtnLocators = [
     // Theo text chính xác
+    page.locator('div[role="button"], button').filter({
+      hasText: /^Thêm\s*bạn\s*bè$/i,
+    }),
     page.locator('div[role="main"] div[role="button"], div[role="main"] button').filter({
       hasText: /^(?:thêm\s*bạn\s*bè|thêm\s*bạn|add\s*friend)$/i,
     }),
@@ -394,10 +399,9 @@ export async function checkAndAddFriend(page, targetUrl, targetAccountName) {
       hasText: /thêm\s*bạn\s*bè|add\s*friend/i,
     }),
     // Theo aria-label
+    page.locator('[aria-label="Thêm bạn bè"], [aria-label="Thêm bạn"], [aria-label="Add friend"]'),
     page.locator('[aria-label*="Thêm bạn bè" i], [aria-label*="Thêm bạn" i], [aria-label*="Add friend" i]'),
   ];
-
-  let addFriendClicked = false;
 
   for (const loc of directAddBtnLocators) {
     const count = await loc.count();
@@ -407,13 +411,38 @@ export async function checkAndAddFriend(page, targetUrl, targetAccountName) {
         if (await item.isVisible().catch(() => false)) {
           console.log(`[Auto-Friend] 🖱️ Tìm thấy nút "Thêm bạn bè" trực tiếp! Đang click...`);
           await item.scrollIntoViewIfNeeded().catch(() => {});
-          await delay(600);
-          await item.click({ timeout: 5000 });
+          await delay(500);
+          await item.click({ timeout: 5000, force: true });
           addFriendClicked = true;
           break;
         }
       }
       if (addFriendClicked) break;
+    }
+  }
+
+  // Fallback: Tìm tọa độ thực của nút xanh "Thêm bạn bè" và click chuột phần cứng (CDP Mouse)
+  if (!addFriendClicked) {
+    const btnBox = await page.evaluate(() => {
+      const buttons = Array.from(document.querySelectorAll('div[role="button"], button'));
+      for (const btn of buttons) {
+        // Loại trừ tab bar
+        if (btn.getAttribute('role') === 'tab' || btn.closest('[role="tablist"]') || btn.closest('ul')) continue;
+        const t = (btn.innerText || btn.getAttribute('aria-label') || '').replace(/[\u00A0\s]+/g, ' ').trim().toLowerCase();
+        if (t === 'thêm bạn bè' || t === 'thêm bạn' || t === 'add friend' || t.includes('thêm bạn bè')) {
+          const rect = btn.getBoundingClientRect();
+          if (rect.width > 0 && rect.height > 0) {
+            return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+          }
+        }
+      }
+      return null;
+    });
+
+    if (btnBox) {
+      console.log(`[Auto-Friend] 🖱️ Tìm thấy tọa độ nút xanh "Thêm bạn bè": (${Math.round(btnBox.x)}, ${Math.round(btnBox.y)}). Đang click chuột thực...`);
+      await page.mouse.click(btnBox.x, btnBox.y);
+      addFriendClicked = true;
     }
   }
 
@@ -543,15 +572,35 @@ export async function checkAndAddFriend(page, targetUrl, targetAccountName) {
   }
 
   // B. Kiểm tra "ĐÃ LÀ BẠN BÈ" THỰC SỰ
-  // (Chỉ kiểm tra div[role="button"] trong header hành động của profile, loại trừ role="tab" và role="link")
+  // (TUYỆT ĐỐI KHÔNG kiểm tra tab "Bạn bè" hay danh sách bạn bè chung)
   const isTrulyFriends = await page.evaluate(() => {
-    const buttons = Array.from(
-      document.querySelectorAll('div[role="main"] div[role="button"], div[data-pagelet="ProfileActions"] div[role="button"]')
-    );
+    // 1. Chỉ tìm trong ProfileActions hoặc header actions
+    const actionContainer =
+      document.querySelector('div[data-pagelet="ProfileActions"]') ||
+      document.querySelector('div[aria-label*="Hành động" i]');
+
+    if (actionContainer) {
+      const buttons = Array.from(actionContainer.querySelectorAll('div[role="button"], button'));
+      return buttons.some((el) => {
+        const t = (el.innerText || el.getAttribute('aria-label') || '').replace(/[\u00A0\s]+/g, ' ').trim().toLowerCase();
+        return t === 'bạn bè' || t === 'friends' || t.includes('hủy kết bạn');
+      });
+    }
+
+    // 2. Fallback: Tìm nút "Bạn bè" nằm ngoài Tab bar
+    const buttons = Array.from(document.querySelectorAll('div[role="button"], button'));
     return buttons.some((el) => {
-      if (el.getAttribute('role') === 'tab' || el.closest('[role="tablist"]')) return false;
+      // Loại trừ hoàn toàn nếu nằm trong Tab điều hướng Profile
+      if (
+        el.closest('[role="tablist"]') ||
+        el.closest('div[data-pagelet="ProfileTabs"]') ||
+        el.closest('ul') ||
+        el.getAttribute('role') === 'tab'
+      ) {
+        return false;
+      }
       const t = (el.innerText || el.getAttribute('aria-label') || '').replace(/[\u00A0\s]+/g, ' ').trim().toLowerCase();
-      return t === 'bạn bè' || t === 'friends' || t === 'hủy kết bạn' || t === 'unfriend';
+      return (t === 'bạn bè' && el.querySelector('svg')) || t.includes('hủy kết bạn');
     });
   });
 
